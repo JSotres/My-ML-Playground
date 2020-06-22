@@ -1,0 +1,1 @@
+Here you can find a Python class for implementing Logictic Regression, and a Jupyter notebook where I compared its performance with that of the sklearn method
