@@ -3,21 +3,48 @@ import matplotlib.pyplot as plt
 
 
 class LogisticRegressionModel():
+    """
+    Class that implements a simple logistic regression model.
+    Optimization algoritm: gradient descent.
+    Does not implement regularization (yet).
+    Acknowledgement: based on code from the Neural Networks and 
+    Deep Learning Course from Coursera.
 
-    def __init__(self, dim):
-        self.dim = dim
+    ATTRIBUTES:
+    self.dim: model dimensions/number of features
+    self.params: a dictionary. The first value, weights,
+        corresponds to a numpy array of shape (number of features, 1) 
+        and the second value, the bias, are all initialized 
+        with 0 values.
+    self.gradients: a dictionary. The first value corresponds to a
+        numpy array, dw, of shape (number of features, 1) that corresponds to
+        the derivative of the cost function with respect to each of
+        the weights. The second value corresponds to a scalar, db, that
+        corresponds to the derivative of the cost function with respect
+        to the bias.
+    self.costs: numpy array of the values of the cost function obtained
+        every 1000 iterations during training.
+
+    METHODS:
+    __init__(self, n_features):
+    initialize(n_features):
+    sigmoid(z):
+    """
+
+    def __init__(self, n_features):
+        self.n_features = n_features
         self.params = {}
-        self.grads = {}
+        self.gradients = {}
         self.costs = []
         
     @staticmethod
-    def initialize(dim):
+    def initialize(n_features):
         """
-        This function creates a dictionary, params, where the first value, wights,
-        corresponds to a numpy array of shape (self.dim, 1) and the second value, the bias,
-        are all initialized with 0 values.        
+        This function creates a dictionary, params, where the first value, weights,
+        corresponds to a numpy array of shape (self.n_features, 1) and the second 
+        value, the bias, are all initialized with 0 values.        
         """
-        w = np.zeros((dim,1))
+        w = np.zeros((n_features,1))
         b = 0
         params = {"w": w, "b": b}
         return params
@@ -25,22 +52,22 @@ class LogisticRegressionModel():
     @staticmethod
     def sigmoid(z):
         """
-        Compute the sigmoid of z
+        Computes the sigmoid of z
 
         Arguments:
         z -- A scalar or numpy array of any size.
 
-        Return:
+        Returns:
         s -- sigmoid(z)
         """
 
         s = 1/(1+np.exp(-z))
         return s
 
-    def propagate(self, w, b, X, Y):
+    def propagate(self, X, y):
         """
-        Implement the cost function and its gradient for 
-        the forward and bakward propagation
+        Calculates the cost function and its gradient for 
+        the forward and backward propagation
 
         Arguments:
         X -- data of size (number of features, number of examples)
@@ -48,91 +75,80 @@ class LogisticRegressionModel():
 
         Return:
         cost -- negative log-likelihood cost for logistic regression
-        dw -- gradient of the loss with respect to w, thus same shape as w
-        db -- gradient of the loss with respect to b, thus same shape as b
+
+        Updates:
+        self.gradients
         """
 
         m = X.shape[1]
         
 
+        # FORWARD PROPAGATION
+        # compute activation
+        A = self.sigmoid(np.dot(self.params["w"].T,X)+self.params["b"])
+        # compute cost  
+        cost = -1/m*np.sum(y*np.log(A)+(1-y)*np.log(1-A))   
 
-        # FORWARD PROPAGATION (FROM X TO COST)
-        A = self.sigmoid(np.dot(w.T,X)+b)    # compute activation
-        cost = -1/m*np.sum(Y*np.log(A)+(1-Y)*np.log(1-A))   # compute cost
-
-        # BACKWARD PROPAGATION (TO FIND GRAD)
-        dw = np.dot(X,(A-Y).T)/m
-        db = np.sum(A-Y)/m
+        # BACKWARD PROPAGATION
+        self.gradients["dw"] = np.dot(X,(A-y).T)/m
+        self.gradients["db"] = np.sum(A-y)/m
 
         cost = np.squeeze(cost)
 
-        grads = {"dw": dw, "db": db}
-
-        return grads, cost
+        return cost
 
 
     def train(self, X, Y, num_iterations, learning_rate, print_cost = False):
         """
-        This function optimizes w and b by running a gradient descent algorithm
+        This function trains the logistic regression model
 
         Arguments:
-        X -- data of shape (num_features, number of examples)
-        Y -- true "label" vector (values 0 or 1), of shape (1, number of examples)
+        X -- data of shape (number of features, number of samples)
+        Y -- true "label" vector (values 0 or 1), of shape (1, number of samples)
         num_iterations -- number of iterations of the optimization loop
         learning_rate -- learning rate of the gradient descent update rule
-        print_cost -- True to print the loss every 100 steps
+        print_cost -- True to print the loss every 1000 steps
 
-        Returns:
-        params -- dictionary containing the weights w and bias b
-        grads -- dictionary containing the gradients of the weights 
-        and bias with respect to the cost function
-        costs -- list of all the costs computed during the optimization, 
-        this will be used to plot the learning curve.
         """
-    
+
+        # Initializes  the costs and params attributes    
         self.costs = []
-        self.params = self.initialize(self.dim)
+        self.params = self.initialize(self.n_features)
     
         for i in range(num_iterations):
-            # Cost and gradient calculation (≈ 1-4 lines of code)
-            grads, cost = self.propagate(self.params['w'], self.params['b'], X, Y)
+            # Perform forward and backward propagation. Also calculates, and returns,
+            # the Cost function
+            cost = self.propagate(X, Y)
 
-            # Retrieve derivatives from grads
-            dw = grads["dw"]
-            db = grads["db"]
+            # updates weights and bias
+            self.params["w"] -= learning_rate*self.gradients["dw"]
+            self.params["b"] -= learning_rate*self.gradients["db"]
 
-            # update rule (≈ 2 lines of code)
-            self.params['w'] -= learning_rate*dw
-            self.params['b'] -= learning_rate*db
-
-            # Record the costs
-            if i % 100 == 0:
+            # Record the costs every 1000 iterations
+            if i % 1000 == 0:
                 self.costs.append(cost)
 
-            # Print the cost every 100 training iterations
+            # Print on the screen the cost every 1000 training iterations if the 
+            # input variable print_cost is set to True
             if print_cost and i % 1000 == 0:
                 print ("Cost after iteration %i: %f" %(i, cost))
-    
-        #self.params = {"w": w, "b": b}
-
-        self.grads = {"dw": dw, "db": db}
 
 
     def predict(self, X):
         '''
         Predict whether the label is 0 or 1 using learned 
-        logistic regression parameters (w, b)
+        logistic regression parameters
 
         Arguments:
-        X -- data of size (num_px * num_px * 3, number of examples)
+        X -- data of size (number of features, number of examples)
 
         Returns:
-        Y_prediction -- a numpy array (vector) containing all 
+        y_prediction -- a numpy array (vector) containing all 
         predictions (0/1) for the examples in X
         '''
 
         m = X.shape[1]
-        Y_prediction = np.zeros((1,m))
+        y_prediction = np.zeros((1,m))
         w = self.params['w'].reshape(X.shape[0], 1)
         b = self.params['b']
 
@@ -140,20 +156,23 @@ class LogisticRegressionModel():
         A = self.sigmoid(np.dot(w.T,X)+b)
 
         for i in range(A.shape[1]):
-            Y_prediction[0,i] = A[0,i] > 0.5
+            y_prediction[0,i] = A[0,i] > 0.5
 
-        return Y_prediction
+        return y_prediction
 
     def plotCosts(self):
         # Plot learning curve (with costs)
         costs = np.squeeze(self.costs)
         plt.plot(costs)
         plt.ylabel('cost')
-        plt.xlabel('iterations (per hundreds)')
+        plt.xlabel('iterations/1000')
         plt.title("Cost Function")
         plt.show()
 
     def scoring(self, y_predicted, y_true):
+        """
+        Returns accuracy
+        """
         return((y_predicted == y_true).sum()/y_predicted.shape[1])
 
 
