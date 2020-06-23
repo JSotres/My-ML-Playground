@@ -83,6 +83,22 @@ class OneHiddenLayerNN():
             # Print the cost every 1000 iterations
             if print_cost and i % 1000 == 0:
                 print ("Cost after iteration %i: %f" %(i, cost))
+
+    def predict(self, X):
+        Z1 = np.dot(self.params['W1'],X)+self.params['b1']
+        A1 = np.tanh(Z1)
+        Z2 = np.dot(self.params['W2'],A1)+self.params['b2']
+        A2 = sigmoid(Z2)
+        for i in range(A2.shape[1]):
+            y_prediction[0,i] = A2[0,i] > 0.5
+
+        return y_prediction
+
+    def scoring(self, y_predicted, y_true):
+        """
+        Returns accuracy
+        """
+        return((y_predicted == y_true).sum()/y_predicted.shape[1])
     
 
     
