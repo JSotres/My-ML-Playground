@@ -1,7 +1,7 @@
 import numpy as np
 
 
-class 1HiddenLayerNN():
+class OneHiddenLayerNN():
 
     def __init__(self, n_hidden_neurons, n_features=2, n_output_neurons=1, n_samples=1):
         self.n_features = n_features
