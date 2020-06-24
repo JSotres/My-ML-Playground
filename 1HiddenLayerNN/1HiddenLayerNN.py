@@ -2,6 +2,11 @@ import numpy as np
 
 
 class OneHiddenLayerNN():
+    """
+    Implementation of a neural network with just 1 hidden layer
+    Acknowledgement: based on code from the Neural Networks and 
+    Deep Learning Course from Coursera.
+    """
 
     def __init__(self, n_hidden_neurons, n_features=2, n_output_neurons=1, n_samples=1):
         self.n_features = n_features
