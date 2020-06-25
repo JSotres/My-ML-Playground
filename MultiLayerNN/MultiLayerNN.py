@@ -1,4 +1,5 @@
 import numpy as np
+import matplotlib.pyplot as plt
 
 
 class MultiLayerNN():
@@ -9,10 +10,11 @@ class MultiLayerNN():
     Deep Learning Course from Coursera.
     """
 
-    def __init__(self, nn_dimensions):
+    def __init__(self, dimensions):
         # self.nn_dimensions: list containing the dimensions of each layer of the network
 
-        self.nn_dimensions = nn_dimensions
+        self.n_dimensions = len(dimensions)
+        self.dimensions = dimensions
         self.parameters = {}
         self.grads = {}
         self.costs = []
@@ -31,7 +33,7 @@ class MultiLayerNN():
         """
         return z*(z>0), z
 
-    def train(self, X, y, learning_rate = 0.0075, n_iterations = 3000, print_cost=False):
+    def train(self, X, y, print_cost=False, learning_rate = 0.0075, n_iterations = 30000):
         
         self.initialize()
 
@@ -39,48 +41,48 @@ class MultiLayerNN():
 
             AL, caches = self.forwardPropagation(X)
 
-            cost = compute_cost(AL, y)
+            cost = self.compute_cost(AL, y)
 
-            self.grads = self.backwardPropagation(AL, y, caches)
+            self.backwardPropagation(AL, y, caches)
 
             self.update_parameters(learning_rate)
                 
-            # Print the cost every 100 training example
-            if print_cost and i % 100 == 0:
+            # Print the cost every 1000 training example
+            if print_cost and i % 1000 == 0:
                 print ("Cost after iteration %i: %f" %(i, cost))
                 self.costs.append(cost)
 
 
     def initialize(self):
         np.random.seed(1)
-        L = len(self.nn_dimensions)
+        L = len(self.dimensions)
 
         for l in range(1, L):
             self.parameters['W' + str(l)] = np.random.randn(
-                self.nn_dimensions[l], self.nn_dimensions[l-1]
+                self.dimensions[l], self.dimensions[l-1]
                 )*0.01
-            self.parameters['b' + str(l)] = np.zeros((self.nn_dimensions[l], 1))
+            self.parameters['b' + str(l)] = np.zeros((self.dimensions[l], 1))
 
 
     def forwardPropagation(self, X):
 
         caches = []
         A = X
-        L = len(self.nn_dimensions)
+        L = len(self.parameters) // 2
 
         for l in range(1, L):
             A_prev = A 
             A, cache = self.activation_forward(A_prev,
-                parameters['W' + str(l)],
-                parameters['b' + str(l)],
+                self.parameters['W' + str(l)],
+                self.parameters['b' + str(l)],
                 "relu"
                 )
             caches.append(cache)
 
         # AL: activation of the final layer
         AL, cache = self.activation_forward(A,
-            parameters['W' + str(l)],
-            parameters['b' + str(l)],
+            self.parameters['W' + str(L)],
+            self.parameters['b' + str(L)],
             "sigmoid"
             )
 
@@ -122,7 +124,7 @@ class MultiLayerNN():
 
     def backwardPropagation(self, AL, y, caches):
 
-        L = len(self.nn_dimensions)
+        L = len(self.parameters) // 2
         m = AL.shape[1]
         y = y.reshape(AL.shape)
 
@@ -136,9 +138,10 @@ class MultiLayerNN():
             "sigmoid"
             )
 
+
         # Loop from l=L-2 to l=0
         for l in reversed(range(L-1)):
-
+            
             current_cache = caches[l]
 
             dA_prev_temp, dW_temp, db_temp = self.activation_backward(
@@ -168,15 +171,18 @@ class MultiLayerNN():
     @staticmethod
     def relu_backward(dA, activation_cache):
         dZ = dA * (activation_cache>0)
-
-    def sigmoid_backward(self, dA, activation_cache):
-        dZ = dA * (self.sigmoid(activation_cache)*(1-self.sigmoid(activation_cache)))
         return dZ
 
-    def linear_backward(dZ, linear_cache):
-        A_prev, W, b = cache
-        m = A_prev.shape[1]
+    def sigmoid_backward(self, dA, activation_cache):
+        s, _s_ = self.sigmoid(activation_cache)
+        dZ = dA * (s*(1-s))
+        return dZ
 
+    @staticmethod
+    def linear_backward(dZ, linear_cache):
+        A_prev, W, b = linear_cache
+        m = A_prev.shape[1]
+        
         dW = 1/m*np.dot(dZ,A_prev.T)
         db = 1/m*np.sum(dZ, axis=1, keepdims=True)
         dA_prev = np.dot(W.T,dZ)
@@ -185,11 +191,34 @@ class MultiLayerNN():
 
     def update_parameters(self, learning_rate):
 
-        L = len(self.nn_dimensions)
+        L = len(self.parameters) // 2
 
         for l in range(L):
             self.parameters["W" + str(l+1)] -= learning_rate*self.grads["dW" + str(l+1)]
             self.parameters["b" + str(l+1)] -= learning_rate*self.grads["db" + str(l+1)]
+
+    def predict(self, X):
+        AL, _ = self.forwardPropagation(X)
+        y_predicted = np.zeros((1, AL.shape[1]))
+        for i in range(AL.shape[1]):
+            y_predicted[0,i] = AL[0,i] > 0.5
+
+        return y_predicted
+
+    def scoring(self, y_predicted, y_true):
+        """
+        Returns accuracy
+        """
+        return((y_predicted == y_true).sum()/y_predicted.shape[1])
+
+    def plotCosts(self):
+        # Plot learning curve (with costs)
+        costs = np.squeeze(self.costs)
+        plt.plot(costs)
+        plt.ylabel('cost')
+        plt.xlabel('iterations/1000')
+        plt.title("Cost Function")
+        plt.show()
 
 
 
