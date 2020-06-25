@@ -156,16 +156,12 @@ class MultiLayerNN():
         linear_cache, activation_cache = cache
     
         if activation == "relu":
-            ### START CODE HERE ### (≈ 2 lines of code)
             dZ = self.relu_backward(dA, activation_cache)
             dA_prev, dW, db = self.linear_backward(dZ, linear_cache)
-            ### END CODE HERE ###
             
         elif activation == "sigmoid":
-            ### START CODE HERE ### (≈ 2 lines of code)
             dZ = self.sigmoid_backward(dA, activation_cache)
             dA_prev, dW, db = self.linear_backward(dZ, linear_cache)
-            ### END CODE HERE ###
         
         return dA_prev, dW, db
 
