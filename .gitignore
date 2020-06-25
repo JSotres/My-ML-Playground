@@ -8,3 +8,7 @@ OneHiddenLayerNN/__pycache__/
 OneHiddenLayerNN/data_banknote_authentication.txt
 OneHiddenLayerNN/.ipynb_checkpoints
 OneHiddenLayerNN/.ipynb_checkpoints/Untitled-checkpoint.ipynb
+MultiLayerNN/data_banknote_authentication.txt
+#.gitignore#
+MultiLayerNN/.ipynb_checkpoints/
+MultiLayerNN/__pycache__/
